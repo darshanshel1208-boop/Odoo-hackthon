@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A travel itinerary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "coverPhoto": { "type": "string" },
+        "collaborators": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "startDate", "endDate"]
+    },
+    "Stop": {
+      "title": "Stop",
+      "description": "A city stop in a trip",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tripId": { "type": "string" },
+        "cityId": { "type": "string" },
+        "cityName": { "type": "string" },
+        "country": { "type": "string" },
+        "arrivalDate": { "type": "string", "format": "date" },
+        "departureDate": { "type": "string", "format": "date" },
+        "order": { "type": "integer" }
+      },
+      "required": ["id", "tripId", "cityName", "arrivalDate", "departureDate", "order"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "An activity or place to visit in a stop",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "stopId": { "type": "string" },
+        "tripId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "cost": { "type": "number" },
+        "startTime": { "type": "string", "format": "time" },
+        "duration": { "type": "string" },
+        "category": { "type": "string" },
+        "order": { "type": "integer" }
+      },
+      "required": ["id", "stopId", "tripId", "title"]
+    },
+    "ChecklistItem": {
+      "title": "ChecklistItem",
+      "description": "An item in a trip packing checklist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tripId": { "type": "string" },
+        "text": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "category": { "type": "string" }
+      },
+      "required": ["id", "tripId", "text", "completed"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "Trip itineraries"
+    },
+    "/trips/{tripId}/stops/{stopId}": {
+      "schema": "Stop",
+      "description": "Cities in a trip"
+    },
+    "/trips/{tripId}/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Activities for a trip"
+    },
+    "/trips/{tripId}/checklist/{itemId}": {
+      "schema": "ChecklistItem",
+      "description": "Packing checklist items for a trip"
+    }
+  }
+}

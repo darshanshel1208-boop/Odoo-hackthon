@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 256;
+    }
+
+    function isValidTrip(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'startDate', 'endDate']) &&
+             data.ownerId == request.auth.uid &&
+             data.name is string && data.name.size() <= 200 &&
+             data.startDate is string && data.endDate is string;
+    }
+
+    function isValidStop(data) {
+      return data.keys().hasAll(['id', 'tripId', 'cityName', 'arrivalDate', 'departureDate', 'order']) &&
+             data.cityName is string && data.cityName.size() <= 100 &&
+             data.order is int;
+    }
+
+    function isValidActivity(data) {
+      return data.keys().hasAll(['id', 'stopId', 'tripId', 'title', 'cost']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.cost is number && data.cost >= 0;
+    }
+
+    function isValidChecklistItem(data) {
+      return data.keys().hasAll(['id', 'tripId', 'text', 'completed']) &&
+             data.text is string && data.text.size() <= 500 &&
+             data.completed is bool;
+    }
+
+    // Rules
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isValidUser(incoming());
+    }
+
+    match /trips/{tripId} {
+      allow get: if isOwner(existing().ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTrip(incoming()) && isValidId(tripId);
+      allow update: if isOwner(existing().ownerId) && isValidTrip(incoming()) && 
+                    incoming().ownerId == existing().ownerId;
+      allow delete: if isOwner(existing().ownerId);
+
+      // Subcollections
+      match /stops/{stopId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId == request.auth.uid;
+        allow create, update: if isValidStop(incoming());
+      }
+      
+      match /activities/{activityId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId == request.auth.uid;
+        allow create, update: if isValidActivity(incoming());
+      }
+
+      match /checklist/{itemId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId == request.auth.uid;
+        allow create, update: if isValidChecklistItem(incoming());
+      }
+    }
+  }
+}

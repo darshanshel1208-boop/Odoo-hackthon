@@ -1,0 +1,8 @@
+{
+  "name": "Traveloop",
+  "description": "A collaborative multi-city travel planning platform to dream, design, and organize trips with ease.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
